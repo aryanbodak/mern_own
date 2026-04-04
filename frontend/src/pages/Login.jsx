@@ -2,39 +2,37 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 function Login() {
-  const [form, setForm]     = useState({ username: "", password: "" });
+  const [form,    setForm]    = useState({ username: "", password: "" });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    try {
+      const res  = await fetch("http://localhost:5000/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
 
-    const res  = await fetch("http://localhost:5000/api/login", {
-      method:  "POST",
-      headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify(form),
-    });
-    const data = await res.json();
-    setLoading(false);
-
-    if (data.message === "Login successful") {
-      if (data.role === "admin") {
-        // Store credentials so AdminDashboard can attach them to API calls
-        sessionStorage.setItem("adminUser", form.username);
-        sessionStorage.setItem("adminPass", form.password);
-        navigate("/admin");
+      if (data.message === "Login successful") {
+        if (data.role === "admin") {
+          navigate("/admin");
+        } else {
+          sessionStorage.setItem("username", data.username);
+          navigate("/home");
+        }
       } else {
-        sessionStorage.setItem("username", data.username);
-        navigate("/home");
+        alert("Account not found! Please signup.");
       }
-    } else {
-      alert("Account not found! Please signup.");
+    } catch (err) {
+      alert("Something went wrong. Please try again.");
     }
+    setLoading(false);
   };
 
   return (
@@ -47,37 +45,23 @@ function Login() {
         </div>
 
         <h1 className="auth-heading">
-          Welcome<br />
-          <span>back.</span>
+          Welcome<br /><span>back.</span>
         </h1>
         <p className="auth-sub">Sign in to continue your learning journey.</p>
 
         <div className="field-group">
           <div>
             <label className="field-label">Username</label>
-            <input
-              className="field-input"
-              name="username"
-              placeholder="your_username"
-              onChange={handleChange}
-              required
-            />
+            <input className="field-input" name="username" placeholder="your_username" onChange={handleChange} required />
           </div>
           <div>
             <label className="field-label">Password</label>
-            <input
-              className="field-input"
-              name="password"
-              type="password"
-              placeholder="••••••••"
-              onChange={handleChange}
-              required
-            />
+            <input className="field-input" name="password" type="password" placeholder="••••••••" onChange={handleChange} required />
           </div>
         </div>
 
         <button className="submit-btn" onClick={handleSubmit} disabled={loading}>
-          <span>{loading ? "Signing in..." : "Sign In →"}</span>
+          {loading ? "Signing in..." : "Sign In →"}
         </button>
 
         <div className="divider">or</div>
