@@ -1,0 +1,26 @@
+[
+  {
+    "_id": "69d0d6b73dcc6d8f197b8db3",
+    "title": "Mern",
+    "tag": "Dev",
+    "description": "new",
+    "duration": "",
+    "lessons": 0,
+    "color": "#6366f1",
+    "createdAt": "2026-04-04T09:15:35.974Z",
+    "__v": 0,
+    "topics": [
+      {
+        "topicName": "The user interacts with the frontend built using React. React sends requests to the backend using APIs. The backend (Node.js + Express.js) processes the request. Data is stored or retrieved from MongoDB. The response is sent back to React and displayed to the user.",
+        "subTopics": [
+          {
+            "subTopicName": "x",
+            "data": "The user interacts with the frontend built using React.\nReact sends requests to the backend using APIs.\nThe backend (Node.js + Express.js) processes the request.\nData is stored or retrieved from MongoDB.\nThe response is sent back to React and displayed to the user.",
+            "_id": "69d0db71c8965d918514db6e"
+          }
+        ],
+        "_id": "69d0db71c8965d918514db6d"
+      }
+    ]
+  }
+]
