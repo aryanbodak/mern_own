@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import ThemeToggle from "../components/ThemeToggle";
+import Chatbot from "../components/Chatbot";
 
 const tabs = ["All", "Dev", "Design", "Data", "AI", "Cloud", "Business", "Other"];
 
 function Home() {
   const [activeTab,       setActiveTab]       = useState("All");
-  const [view,            setView]            = useState("explore"); // "explore" | "progress"
+  const [view,            setView]            = useState("explore");
   const [allCourses,      setAllCourses]      = useState([]);
   const [enrolledCourses, setEnrolledCourses] = useState([]);
   const [userProgress,    setUserProgress]    = useState({});
@@ -51,6 +53,7 @@ function Home() {
         <div className="nav-right">
           <button className={`nav-link ${view === "explore" ? "active" : ""}`} onClick={() => setView("explore")}>Explore</button>
           <button className={`nav-link ${view === "progress" ? "active" : ""}`} onClick={() => setView("progress")}>My Learning</button>
+          <ThemeToggle />
           <button className="nav-cta" onClick={() => { sessionStorage.clear(); navigate("/"); }}>Sign Out</button>
         </div>
       </nav>
@@ -151,6 +154,9 @@ function Home() {
           </div>
         )}
       </section>
+
+      {/* CHATBOT */}
+      <Chatbot courses={allCourses} />
     </div>
   );
 }

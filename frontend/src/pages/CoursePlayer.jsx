@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import ThemeToggle from "../components/ThemeToggle";
 
 export default function CoursePlayer() {
   const { id }   = useParams();
@@ -31,9 +32,7 @@ export default function CoursePlayer() {
       const enrolledIds = userData.enrolledCourses?.map(c => typeof c === "object" ? c._id : c) || [];
       setIsEnrolled(enrolledIds.includes(courseData._id));
       setCompletedSubs(userData.progress?.[courseData._id] || []);
-    } catch (e) {
-      console.error(e);
-    }
+    } catch (e) { console.error(e); }
     setLoading(false);
   };
 
@@ -56,7 +55,6 @@ export default function CoursePlayer() {
   const currentTopic = course?.topics?.[activeTopic];
   const currentSub   = currentTopic?.subTopics?.[activeSub];
 
-  // Auto-mark subtopic as complete when viewed
   useEffect(() => {
     if (isEnrolled && currentSub?._id) markComplete(currentSub._id);
   }, [isEnrolled, activeTopic, activeSub]);
@@ -85,9 +83,12 @@ export default function CoursePlayer() {
           <button className="back-btn" onClick={() => navigate("/home")}>← Back</button>
           <h1 className="player-title">{course.title}</h1>
         </div>
-        {!isEnrolled && (
-          <button className="enroll-btn" onClick={handleEnroll}>Enroll Now</button>
-        )}
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <ThemeToggle />
+          {!isEnrolled && (
+            <button className="enroll-btn" onClick={handleEnroll}>Enroll Now</button>
+          )}
+        </div>
       </header>
 
       <div className="player-body">

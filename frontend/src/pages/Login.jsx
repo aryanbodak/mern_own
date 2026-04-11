@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import ThemeToggle from "../components/ThemeToggle";
 
 function Login() {
   const [form,    setForm]    = useState({ username: "", password: "" });
@@ -37,6 +38,11 @@ function Login() {
 
   return (
     <div className="auth-root">
+      {/* Theme toggle in top-right corner */}
+      <div className="auth-nav">
+        <ThemeToggle />
+      </div>
+
       {/* Form Panel */}
       <div className="auth-left">
         <div className="brand">

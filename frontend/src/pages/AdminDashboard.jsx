@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import ThemeToggle from "../components/ThemeToggle";
 
 const TAG_OPTIONS = ["Dev", "Design", "Data", "AI", "Cloud", "Business", "Other"];
 const COLOR_OPTIONS = [
@@ -18,7 +19,6 @@ const EMPTY_FORM = {
   topics: [{ topicName: "", subTopics: [{ subTopicName: "", data: "" }] }]
 };
 
-// ✅ Admin credentials hardcoded — share freely
 const ADMIN_USER = "admin";
 const ADMIN_PASS = "admin123";
 
@@ -103,7 +103,6 @@ export default function AdminDashboard() {
 
   const handleLogout = () => { sessionStorage.clear(); navigate("/"); };
 
-  // Syllabus builders
   const handleAddTopic = () => setForm({ ...form, topics: [...form.topics, { topicName: "", subTopics: [{ subTopicName: "", data: "" }] }] });
   const handleRemoveTopic = (tIdx) => setForm({ ...form, topics: form.topics.filter((_, i) => i !== tIdx) });
   const handleTopicNameChange = (tIdx, name) => {
@@ -137,13 +136,15 @@ export default function AdminDashboard() {
             <button className={`sidebar-btn ${tab === "users" ? "active" : ""}`} onClick={() => setTab("users")}>👥 Users</button>
             <button className={`sidebar-btn ${tab === "courses" ? "active" : ""}`} onClick={() => setTab("courses")}>📚 Courses</button>
           </nav>
+          <div style={{ padding: "8px 12px" }}>
+            <ThemeToggle />
+          </div>
           <button className="sidebar-logout" onClick={handleLogout}>🚪 Sign Out</button>
         </aside>
 
         {/* Main */}
         <main className="admin-main">
 
-          {/* USERS TAB */}
           {tab === "users" && (
             <>
               <div className="page-header">
@@ -199,7 +200,6 @@ export default function AdminDashboard() {
             </>
           )}
 
-          {/* COURSES TAB */}
           {tab === "courses" && (
             <>
               <div className="page-header">
@@ -279,7 +279,6 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Syllabus Builder */}
             <div className="syllabus-builder">
               <h3 className="syllabus-title">Course Content (Syllabus)</h3>
               {form.topics.map((topic, tIdx) => (
@@ -308,7 +307,6 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Delete Modal */}
       {deleteModal && (
         <div className="modal-overlay">
           <div className="modal">
@@ -322,7 +320,6 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Toast */}
       {toast && <div className={`toast ${toast.type}`}>{toast.msg}</div>}
     </div>
   );
