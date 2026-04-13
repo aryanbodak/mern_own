@@ -4,7 +4,8 @@ import { ThemeProvider } from "./context/ThemeContext";
 import Login          from "./pages/Login";
 import Signup         from "./pages/Signup";
 import Home           from "./pages/Home";
-import AdminDashboard from "./pages/AdminDashboard";
+import Profile        from "./pages/Profile";
+import AdminDashboard from "./pages/Admin/AdminDashboard";
 import CoursePlayer   from "./pages/CoursePlayer";
 import MongoOutput    from "./pages/MongoOutput";
 import "./index.css";
@@ -17,6 +18,7 @@ function App() {
           <Route path="/"           element={<Login />} />
           <Route path="/signup"     element={<Signup />} />
           <Route path="/home"       element={<Home />} />
+          <Route path="/profile"    element={<Profile />} />
           <Route path="/admin"      element={<AdminDashboard />} />
           <Route path="/course/:id" element={<CoursePlayer />} />
           <Route path="/debug"      element={<MongoOutput />} />

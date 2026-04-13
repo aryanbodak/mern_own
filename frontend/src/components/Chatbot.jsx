@@ -1,149 +1,139 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState } from "react";
 
-const SUGGESTIONS = [
-  "What courses are available?",
-  "How do I enroll in a course?",
-  "Show me AI/ML courses",
-  "How do I track my progress?",
-];
-
-export default function Chatbot({ courses = [] }) {
-  const [open, setOpen] = useState(false);
+export default function Chatbot() {
+  const [open, setOpen] = useState(false); // 🔥 toggle
   const [messages, setMessages] = useState([
-    {
-      role: "bot",
-      text: "👋 Hi! I'm your CourseDB assistant. Ask me anything about courses, enrollment, or your progress!",
-    },
+    { from: "bot", text: "Hi 👋 Ask me about courses!" }
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const bottomRef = useRef(null);
-  const inputRef = useRef(null);
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  useEffect(() => {
-    if (open) setTimeout(() => inputRef.current?.focus(), 100);
-  }, [open]);
+  const suggestions = [
+    "What courses are available?",
+    "Recommend me a course",
+    "How to enroll?",
+    "Show my progress"
+  ];
 
   const sendMessage = async (text) => {
-    const userText = text || input.trim();
-    if (!userText) return;
-    setInput("");
-    setMessages((prev) => [...prev, { role: "user", text: userText }]);
-    setLoading(true);
+  if (!text.trim()) return;
 
-    try {
-      const res = await fetch("http://localhost:5000/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userText, courses }),
-      });
+  setMessages(prev => [...prev, { from: "user", text }]);
+  setInput("");
+  setLoading(true);
+
+  const username = sessionStorage.getItem("username");
+
+  try {
+    // ✅ HANDLE PROGRESS LOCALLY
+    if (text.toLowerCase().includes("progress")) {
+      const res = await fetch(`http://localhost:5000/api/user/${username}`);
       const data = await res.json();
-      setMessages((prev) => [...prev, { role: "bot", text: data.reply }]);
-    } catch {
-      setMessages((prev) => [
-        ...prev,
-        { role: "bot", text: "⚠️ Sorry, I couldn't connect. Please try again." },
-      ]);
-    }
-    setLoading(false);
-  };
 
-  const handleKey = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
+      const enrolled = data.enrolledCourses || [];
+      const progress = data.progress || {};
+
+      if (enrolled.length === 0) {
+        setMessages(prev => [
+          ...prev,
+          { from: "bot", text: "You are not enrolled in any courses yet." }
+        ]);
+      } else {
+        let reply = "📊 Your Progress:\n\n";
+
+        enrolled.forEach(course => {
+          const id = course._id;
+          const title = course.title;
+
+          const done = progress[id]?.length || 0;
+          let total = 0;
+
+          course.topics?.forEach(t => {
+            total += t.subTopics?.length || 0;
+          });
+
+          const percent = total === 0 ? 0 : Math.floor((done / total) * 100);
+
+          reply += `• ${title} → ${percent}%\n`;
+        });
+
+        setMessages(prev => [
+          ...prev,
+          { from: "bot", text: reply }
+        ]);
+      }
+
+      setLoading(false);
+      return;
     }
-  };
+
+    // 🔹 NORMAL CHAT (AI / fallback)
+    const res = await fetch("http://localhost:5000/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ message: text })
+    });
+
+    const data = await res.json();
+
+    setMessages(prev => [
+      ...prev,
+      { from: "bot", text: data.reply || "No response" }
+    ]);
+
+  } catch {
+    setMessages(prev => [
+      ...prev,
+      { from: "bot", text: "⚠️ Error fetching data." }
+    ]);
+  }
+
+  setLoading(false);
+};
 
   return (
     <>
-      {/* Floating button */}
+      {/* FLOAT BUTTON */}
       <button
-        className={`chat-fab ${open ? "open" : ""}`}
-        onClick={() => setOpen((o) => !o)}
-        aria-label="Open chatbot"
+        className="chat-toggle"
+        onClick={() => setOpen(!open)}
       >
-        {open ? "✕" : "💬"}
-        {!open && <span className="fab-pulse" />}
+        💬
       </button>
 
-      {/* Chat Window */}
+      {/* CHAT WINDOW */}
       {open && (
-        <div className="chat-window">
-          {/* Header */}
+        <div className="chatbot-popup">
+
+          {/* HEADER */}
           <div className="chat-header">
-            <div className="chat-header-left">
-              <div className="bot-avatar">🤖</div>
-              <div>
-                <div className="bot-name">CourseDB AI</div>
-                <div className="bot-status">
-                  <span className="status-dot" /> Online
-                </div>
-              </div>
-            </div>
-            <button className="chat-close" onClick={() => setOpen(false)}>✕</button>
+            <span>Chat Assistant</span>
+            <button onClick={() => setOpen(false)}>✖</button>
           </div>
 
-          {/* Messages */}
+          {/* MESSAGES */}
           <div className="chat-messages">
-            {messages.map((m, i) => (
-              <div key={i} className={`msg-row ${m.role}`}>
-                {m.role === "bot" && <div className="msg-avatar">🤖</div>}
-                <div className={`msg-bubble ${m.role}`}>
-                  {m.text.split("\n").map((line, j) => (
-                    <span key={j}>
-                      {line}
-                      {j < m.text.split("\n").length - 1 && <br />}
-                    </span>
-                  ))}
-                </div>
+            {messages.map((msg, i) => (
+              <div key={i} className={`chat-bubble ${msg.from}`}>
+                {msg.text}
               </div>
             ))}
 
-            {loading && (
-              <div className="msg-row bot">
-                <div className="msg-avatar">🤖</div>
-                <div className="msg-bubble bot typing">
-                  <span /><span /><span />
-                </div>
-              </div>
-            )}
-            <div ref={bottomRef} />
+            {loading && <div className="chat-bubble bot">Typing...</div>}
           </div>
 
-          {/* Suggestions */}
-          {messages.length <= 1 && (
-            <div className="chat-suggestions">
-              {SUGGESTIONS.map((s, i) => (
-                <button key={i} className="suggestion-chip" onClick={() => sendMessage(s)}>
-                  {s}
+          {/* SUGGESTIONS */}
+          {messages[messages.length - 1]?.from === "bot" && (
+            <div className="suggestions">
+              {suggestions.map((q, i) => (
+                <button key={i} onClick={() => sendMessage(q)}>
+                  {q}
                 </button>
               ))}
             </div>
           )}
-
-          {/* Input */}
-          <div className="chat-input-row">
-            <input
-              ref={inputRef}
-              className="chat-input"
-              placeholder="Ask about courses..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKey}
-            />
-            <button
-              className="chat-send"
-              onClick={() => sendMessage()}
-              disabled={!input.trim() || loading}
-            >
-              ➤
-            </button>
-          </div>
         </div>
       )}
     </>

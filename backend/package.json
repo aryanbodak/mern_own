@@ -13,8 +13,10 @@
   "dependencies": {
     "body-parser": "^2.2.2",
     "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "mongoose": "^9.4.1",
-    "node": "^25.9.0"
+    "node": "^25.9.0",
+    "openai": "^6.34.0"
   }
 }

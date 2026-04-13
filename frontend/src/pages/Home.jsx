@@ -18,6 +18,8 @@ function Home() {
 
   useEffect(() => {
     if (!username) { navigate("/"); return; }
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("view") === "progress") setView("progress");
     fetchData();
   }, [username, navigate]);
 
@@ -33,9 +35,7 @@ function Home() {
       setAllCourses(Array.isArray(coursesData) ? coursesData : []);
       setEnrolledCourses(userData.enrolledCourses || []);
       setUserProgress(userData.progress || {});
-    } catch (err) {
-      console.error(err);
-    }
+    } catch (err) { console.error(err); }
     setLoading(false);
   };
 
@@ -46,116 +46,122 @@ function Home() {
     <div className="home-root">
       {/* NAV */}
       <nav className="nav">
-        <div className="brand">
+        <button className="brand" style={{ background: "none", border: "none", cursor: "pointer" }} onClick={() => setView("explore")}>
           <div className="brand-dot" />
           <span className="brand-name">CourseDB</span>
-        </div>
+        </button>
         <div className="nav-right">
-          <button className={`nav-link ${view === "explore" ? "active" : ""}`} onClick={() => setView("explore")}>Explore</button>
+          <button className={`nav-link ${view === "explore"  ? "active" : ""}`} onClick={() => setView("explore")}>Explore</button>
           <button className={`nav-link ${view === "progress" ? "active" : ""}`} onClick={() => setView("progress")}>My Learning</button>
+          <button className="nav-link" onClick={() => navigate("/profile")}>Profile</button>
           <ThemeToggle />
           <button className="nav-cta" onClick={() => { sessionStorage.clear(); navigate("/"); }}>Sign Out</button>
         </div>
       </nav>
 
-      {/* HERO */}
-      <section className="hero">
-        <div className="hero-eyebrow">
-          <div className="hero-eyebrow-dot" />
-          Welcome back, {username}
-        </div>
-        <h1 className="hero-title">Learn skills that<br /><span>matter most.</span></h1>
-        <p className="hero-sub">Expertly crafted courses to help you grow faster. Join thousands of learners already leveling up.</p>
-        <div className="hero-actions">
-          <button className="btn-primary" onClick={() => setView("explore")}>Browse Courses →</button>
-          <button className="btn-ghost"   onClick={() => setView("progress")}>View My Progress</button>
-        </div>
-      </section>
+      {/* HERO — explore only */}
+      {view === "explore" && (
+        <section className="hero">
+          <div className="hero-eyebrow"><div className="hero-eyebrow-dot" />Welcome back, {username}</div>
+          <h1 className="hero-title">Learn skills that<br /><span>matter most.</span></h1>
+          <p className="hero-sub">Expertly crafted courses to help you grow faster.</p>
+          <div className="hero-actions">
+            <button className="btn-primary" onClick={() => setView("explore")}>Browse Courses →</button>
+            <button className="btn-ghost"   onClick={() => setView("progress")}>View My Progress</button>
+          </div>
+        </section>
+      )}
 
-      {/* COURSES SECTION */}
       <section className="courses-section">
-        <div className="section-header">
-          <div>
-            <h2 className="section-title">{view === "explore" ? "Explore Courses" : "My Progress"}</h2>
-            <p className="section-sub">{view === "explore" ? "Hand-picked by our expert team" : "Track your continuing journey"}</p>
-          </div>
-          {view === "explore" && (
-            <div className="tabs">
-              {tabs.map(tab => (
-                <button key={tab} className={`tab ${activeTab === tab ? "active" : ""}`} onClick={() => setActiveTab(tab)}>
-                  {tab}
-                </button>
-              ))}
+        {/* EXPLORE */}
+        {view === "explore" && (
+          <>
+            <div className="section-header">
+              <div>
+                <h2 className="section-title">Explore Courses</h2>
+                <p className="section-sub">Hand-picked by our expert team</p>
+              </div>
+              <div className="tabs">
+                {tabs.map(tab => (
+                  <button key={tab} className={`tab ${activeTab === tab ? "active" : ""}`} onClick={() => setActiveTab(tab)}>{tab}</button>
+                ))}
+              </div>
             </div>
-          )}
-        </div>
+            {loading ? <p className="loading-text">Loading...</p> : (
+              <div className="course-grid">
+                {filteredExplore.length === 0 ? <p className="empty-text">No courses in this category.</p> : (
+                  filteredExplore.map(course => (
+                    <div className="course-card" key={course._id} style={{ "--accent": course.color || "#6366f1" }}>
+                      <div className="card-tag">{course.tag}</div>
+                      <h3 className="card-title">{course.title}</h3>
+                      <div className="card-meta">
+                        <div className="card-meta-item">📚 {course.lessons} lessons</div>
+                        <div className="card-meta-item">⏱ {course.duration || "N/A"}</div>
+                      </div>
+                      <div className="card-footer">
+                        {enrolledCourseIds.has(course._id)
+                          ? <span className="card-enroll card-enroll-active" onClick={() => navigate(`/course/${course._id}`)}>Continue Learning →</span>
+                          : <span className="card-enroll" onClick={() => navigate(`/course/${course._id}`)}>View Details →</span>}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </>
+        )}
 
-        {loading ? (
-          <p className="loading-text">Loading...</p>
-        ) : view === "explore" ? (
-          <div className="course-grid">
-            {filteredExplore.length === 0 ? (
-              <p className="empty-text">No courses available in this category.</p>
-            ) : (
-              filteredExplore.map(course => (
-                <div className="course-card" key={course._id} style={{ "--accent": course.color || "#6366f1" }}>
-                  <div className="card-tag">{course.tag}</div>
-                  <h3 className="card-title">{course.title}</h3>
-                  <div className="card-meta">
-                    <div className="card-meta-item">📚 {course.lessons} lessons</div>
-                    <div className="card-meta-item">⏱ {course.duration || "N/A"}</div>
-                  </div>
-                  <div className="card-footer">
-                    {enrolledCourseIds.has(course._id) ? (
-                      <span className="card-enroll card-enroll-active" onClick={() => navigate(`/course/${course._id}`)}>Continue Learning →</span>
-                    ) : (
-                      <span className="card-enroll" onClick={() => navigate(`/course/${course._id}`)}>View Details →</span>
-                    )}
-                  </div>
+        {/* MY LEARNING — progress cards only */}
+        {view === "progress" && (
+          <>
+            <div className="section-header">
+              <div>
+                <h2 className="section-title">My Learning</h2>
+                <p className="section-sub">Track your continuing journey</p>
+              </div>
+            </div>
+            {loading ? <p className="loading-text">Loading...</p>
+              : enrolledCourses.length === 0 ? (
+                <div className="learning-empty-cta">
+                  <p>You haven't enrolled in any courses yet.</p>
+                  <button className="btn-primary" onClick={() => setView("explore")}>Browse Courses →</button>
                 </div>
-              ))
-            )}
-          </div>
-        ) : (
-          <div className="course-grid">
-            {enrolledCourses.length === 0 ? (
-              <p className="empty-text">You are not enrolled in any courses yet.</p>
-            ) : (
-              enrolledCourses.map(course => {
-                let totalSubs = 0;
-                course.topics?.forEach(t => { totalSubs += t.subTopics?.length || 0; });
-                const completedCount = userProgress[course._id]?.length || 0;
-                const prog = totalSubs === 0 ? 0 : Math.min(Math.floor((completedCount / totalSubs) * 100), 100);
-
-                return (
-                  <div className="course-card" key={course._id} style={{ "--accent": course.color || "#6366f1" }}>
-                    <div className="card-tag">{course.tag}</div>
-                    <h3 className="card-title">{course.title}</h3>
-                    <div className="card-meta">
-                      <div className="card-meta-item">📚 {course.lessons} lessons</div>
-                      <div className="card-meta-item">⏱ {course.duration || "N/A"}</div>
-                    </div>
-                    <div className="progress-wrap">
-                      <div className="progress-info">
-                        <span>Course Progress</span>
-                        <span className="progress-pct">{prog}%</span>
+              ) : (
+                <div className="course-grid">
+                  {enrolledCourses.map(course => {
+                    let totalSubs = 0;
+                    course.topics?.forEach(t => { totalSubs += t.subTopics?.length || 0; });
+                    const done = userProgress[course._id]?.length || 0;
+                    const prog = totalSubs === 0 ? 0 : Math.min(Math.floor((done / totalSubs) * 100), 100);
+                    return (
+                      <div className="course-card" key={course._id} style={{ "--accent": course.color || "#6366f1" }}>
+                        <div className="card-tag">{course.tag}</div>
+                        <h3 className="card-title">{course.title}</h3>
+                        <div className="card-meta">
+                          <div className="card-meta-item">📚 {course.lessons} lessons</div>
+                          <div className="card-meta-item">⏱ {course.duration || "N/A"}</div>
+                        </div>
+                        <div className="progress-wrap">
+                          <div className="progress-info">
+                            <span>Progress</span>
+                            <span className="progress-pct">{prog}%</span>
+                          </div>
+                          <div className="progress-bar-track">
+                            <div className="progress-bar-fill-dynamic" style={{ width: `${prog}%`, background: course.color || "#6366f1" }} />
+                          </div>
+                        </div>
+                        <div className="card-footer">
+                          <span className="card-enroll" style={{ color: "var(--accent)" }} onClick={() => navigate(`/course/${course._id}`)}>Continue Learning →</span>
+                        </div>
                       </div>
-                      <div className="progress-bar-track">
-                        <div className="progress-bar-fill-dynamic" style={{ width: `${prog}%`, background: course.color || "#6366f1" }} />
-                      </div>
-                    </div>
-                    <div className="card-footer">
-                      <span className="card-enroll" style={{ color: "var(--accent)" }} onClick={() => navigate(`/course/${course._id}`)}>Continue Learning →</span>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
+                    );
+                  })}
+                </div>
+              )}
+          </>
         )}
       </section>
 
-      {/* CHATBOT */}
       <Chatbot courses={allCourses} />
     </div>
   );
