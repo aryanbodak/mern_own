@@ -1,4 +1,7 @@
+import { useState } from "react";
+
 export default function UsersSection({ users, loading, search, setSearch }) {
+  const [drawerUser, setDrawerUser] = useState(null);
 
   const filtered = users.filter(
     (u) =>
@@ -8,13 +11,11 @@ export default function UsersSection({ users, loading, search, setSearch }) {
 
   return (
     <>
-      {/* HEADER */}
       <div className="page-header">
         <div>
           <h1 className="page-title">Users</h1>
           <p className="page-sub">{users.length} registered users</p>
         </div>
-
         <div className="page-actions">
           <div className="search-wrap">
             <span className="search-icon">🔍</span>
@@ -28,20 +29,17 @@ export default function UsersSection({ users, loading, search, setSearch }) {
         </div>
       </div>
 
-      {/* STATS */}
       <div className="mini-stats">
         <div className="mini-stat">
           <div className="mini-stat-num">{users.length}</div>
           <div className="mini-stat-label">Total Users</div>
         </div>
-
         <div className="mini-stat">
           <div className="mini-stat-num">
             {users.filter((u) => u.enrolledCourses?.length > 0).length}
           </div>
           <div className="mini-stat-label">Enrolled</div>
         </div>
-
         <div className="mini-stat">
           <div className="mini-stat-num">
             {users.reduce((sum, u) => sum + (u.enrolledCourses?.length || 0), 0)}
@@ -50,7 +48,6 @@ export default function UsersSection({ users, loading, search, setSearch }) {
         </div>
       </div>
 
-      {/* TABLE */}
       {loading ? (
         <p className="loading-text">Loading users...</p>
       ) : (
@@ -68,78 +65,97 @@ export default function UsersSection({ users, loading, search, setSearch }) {
                 <th>Count</th>
               </tr>
             </thead>
-
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={8} style={{ textAlign: "center", padding: "40px" }}>
-                    No users found
-                  </td>
+                  <td colSpan={8} className="table-empty-cell">No users found</td>
                 </tr>
               ) : (
                 filtered.map((u) => (
                   <tr key={u._id}>
-
-                    {/* USER */}
                     <td>
                       <div className="user-cell">
                         <div className="user-avatar">
                           {u.username?.[0]?.toUpperCase() || "?"}
                         </div>
-                        <div>
-                          <div className="user-name">{u.username}</div>
-                        </div>
+                        <div className="user-name">{u.username}</div>
                       </div>
                     </td>
-
-                    {/* EMAIL */}
                     <td>{u.email || "—"}</td>
-
-                    {/* COLLEGE */}
                     <td>{u.college || "—"}</td>
-
-                    {/* BRANCH */}
                     <td>{u.branch || "—"}</td>
-
-                    {/* YEAR */}
                     <td>{u.year || "—"}</td>
-
-                    {/* INTERESTS */}
                     <td>
                       {u.interests?.length > 0
-                        ? u.interests.slice(0, 2).join(", ") +
-                          (u.interests.length > 2 ? "..." : "")
+                        ? u.interests.slice(0, 2).join(", ") + (u.interests.length > 2 ? "..." : "")
                         : "—"}
                     </td>
-
-                    {/* COURSES */}
                     <td>
-                      <div className="enroll-chips">
-                        {u.enrolledCourses?.length > 0 ? (
-                          u.enrolledCourses.slice(0, 2).map((c, i) => (
-                            <span key={i} className="enroll-chip">
-                              {c.title}
-                            </span>
-                          ))
-                        ) : (
-                          <span>None</span>
-                        )}
-                      </div>
+                      {u.enrolledCourses?.length > 0 ? (
+                        <button className="view-courses-btn" onClick={() => setDrawerUser(u)}>
+                          📚 View {u.enrolledCourses.length} course{u.enrolledCourses.length > 1 ? "s" : ""}
+                        </button>
+                      ) : (
+                        <span>None</span>
+                      )}
                     </td>
-
-                    {/* COUNT */}
                     <td>
-                      <span className="count-cell">
-                        {u.enrolledCourses?.length || 0}
-                      </span>
+                      <span className="count-cell">{u.enrolledCourses?.length || 0}</span>
                     </td>
-
                   </tr>
                 ))
               )}
             </tbody>
           </table>
         </div>
+      )}
+
+      {drawerUser && (
+        <>
+          <div className="drawer-backdrop" onClick={() => setDrawerUser(null)} />
+          <div className="courses-drawer">
+            <div className="drawer-header">
+              <div>
+                <div className="drawer-title">
+                  <span className="drawer-avatar">
+                    {drawerUser.username?.[0]?.toUpperCase()}
+                  </span>
+                  {drawerUser.username}'s Courses
+                </div>
+                <div className="drawer-sub">{drawerUser.enrolledCourses.length} enrolled</div>
+              </div>
+              <button className="drawer-close" onClick={() => setDrawerUser(null)}>✕</button>
+            </div>
+            <div className="drawer-list">
+              {drawerUser.enrolledCourses.map((c, i) => {
+                const rawDone = drawerUser.progress?.[c._id] || [];
+                const done = new Set(rawDone).size;
+                let total = 0;
+                c.topics?.forEach(t => { total += t.subTopics?.length || 0; });
+                const pct = total === 0 ? 0 : Math.min(Math.floor((done / total) * 100), 100);
+                return (
+                  <div
+                    key={c._id || i}
+                    className="drawer-course-row"
+                    style={{ "--dc": c.color || "var(--accent)" }}
+                  >
+                    <div className="drawer-course-dot" />
+                    <div className="drawer-course-info">
+                      <div className="drawer-course-top">
+                        <div className="drawer-course-title">{c.title}</div>
+                        <div className="drawer-course-pct">{pct}%</div>
+                      </div>
+                      <div className="drawer-course-tag">{c.tag}</div>
+                      <div className="drawer-progress-track">
+                        <div className="drawer-progress-fill" style={{ "--pct": `${pct}%` }} />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </>
       )}
     </>
   );

@@ -6,11 +6,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 require("dotenv").config();
-const { OpenAI } = require("openai");
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
 /* ──────────────────────────────────────────────────────────
    DB CONNECTION
 ────────────────────────────────────────────────────────── */
@@ -219,7 +214,7 @@ app.post("/api/user/:username/progress", async (req, res) => {
 app.get("/api/admin/users", requireAdmin, async (req, res) => {
   const users = await User.find({ role: "user" })
     .select("-password")
-    .populate("enrolledCourses", "title tag color");
+    .populate("enrolledCourses", "title tag color topics");
 
   res.json(users);
 });

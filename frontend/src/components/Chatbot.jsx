@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 export default function Chatbot() {
-  const [open, setOpen] = useState(false); // 🔥 toggle
+  const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([
     { from: "bot", text: "Hi 👋 Ask me about courses!" }
   ]);
@@ -16,82 +16,134 @@ export default function Chatbot() {
   ];
 
   const sendMessage = async (text) => {
-  if (!text.trim()) return;
+    if (!text.trim()) return;
 
-  setMessages(prev => [...prev, { from: "user", text }]);
-  setInput("");
-  setLoading(true);
+    setMessages(prev => [...prev, { from: "user", text }]);
+    setInput("");
+    setLoading(true);
 
-  const username = sessionStorage.getItem("username");
+    const username = sessionStorage.getItem("username");
 
-  try {
-    // ✅ HANDLE PROGRESS LOCALLY
-    if (text.toLowerCase().includes("progress")) {
-      const res = await fetch(`http://localhost:5000/api/user/${username}`);
-      const data = await res.json();
+    try {
+      // ✅ HANDLE PROGRESS LOCALLY
+      if (text.toLowerCase().includes("progress")) {
+        const res = await fetch(`http://localhost:5000/api/user/${username}`);
+        const data = await res.json();
 
-      const enrolled = data.enrolledCourses || [];
-      const progress = data.progress || {};
+        const enrolled = data.enrolledCourses || [];
+        const progress = data.progress || {};
 
-      if (enrolled.length === 0) {
-        setMessages(prev => [
-          ...prev,
-          { from: "bot", text: "You are not enrolled in any courses yet." }
-        ]);
-      } else {
-        let reply = "📊 Your Progress:\n\n";
+        if (enrolled.length === 0) {
+          setMessages(prev => [
+            ...prev,
+            { from: "bot", text: "You are not enrolled in any courses yet." }
+          ]);
+        } else {
+          let reply = "📊 Your Progress:\n\n";
 
-        enrolled.forEach(course => {
-          const id = course._id;
-          const title = course.title;
+          enrolled.forEach(course => {
+            const id = course._id;
+            const title = course.title;
 
-          const done = progress[id]?.length || 0;
-          let total = 0;
+            // ✅ FIX: deduplicate subtopic IDs so revisiting doesn't inflate count
+            const rawDone = progress[id] || [];
+            const done = new Set(rawDone).size;
 
-          course.topics?.forEach(t => {
-            total += t.subTopics?.length || 0;
+            let total = 0;
+            course.topics?.forEach(t => {
+              total += t.subTopics?.length || 0;
+            });
+
+            // ✅ FIX: cap at 100%
+            const percent = total === 0 ? 0 : Math.min(Math.floor((done / total) * 100), 100);
+
+            reply += `• ${title} → ${percent}%\n`;
           });
 
-          const percent = total === 0 ? 0 : Math.floor((done / total) * 100);
+          setMessages(prev => [
+            ...prev,
+            { from: "bot", text: reply }
+          ]);
+        }
 
-          reply += `• ${title} → ${percent}%\n`;
-        });
+        setLoading(false);
+        return;
+      }
+
+      // ✅ HANDLE RECOMMEND LOCALLY using profile interests
+      if (text.toLowerCase().includes("recommend")) {
+        const userRes = await fetch(`http://localhost:5000/api/user/${username}`);
+        const userData = await userRes.json();
+        const interests = userData.interests || [];
+
+        const coursesRes = await fetch("http://localhost:5000/api/courses");
+        const allCourses = await coursesRes.json();
+
+        let pool = allCourses;
+
+        // Filter by interests if the user has any set
+        if (interests.length > 0) {
+          // Map interest labels to course tags/titles (loose match)
+          const interestKeywords = interests.map(i => i.toLowerCase());
+          const filtered = allCourses.filter(c =>
+            interestKeywords.some(kw =>
+              c.tag?.toLowerCase().includes(kw) ||
+              c.title?.toLowerCase().includes(kw) ||
+              c.description?.toLowerCase().includes(kw)
+            )
+          );
+          // Only use filtered pool if it has results
+          if (filtered.length > 0) pool = filtered;
+        }
+
+        // Exclude already-enrolled courses
+        const enrolledIds = (userData.enrolledCourses || []).map(ec =>
+          typeof ec === "object" ? ec._id : ec
+        );
+        const unenrolled = pool.filter(c => !enrolledIds.includes(c._id));
+
+        // Fall back to full pool if everything is already enrolled
+        const finalPool = unenrolled.length > 0 ? unenrolled : pool;
+
+        const pick = finalPool[Math.floor(Math.random() * finalPool.length)];
 
         setMessages(prev => [
           ...prev,
-          { from: "bot", text: reply }
+          {
+            from: "bot",
+            text: pick
+              ? `✨ Based on your interests, try:\n\n📘 ${pick.title}\n${pick.description}\n\nTag: ${pick.tag} · ${pick.duration} · ${pick.lessons} lessons`
+              : "No courses available right now."
+          }
         ]);
+
+        setLoading(false);
+        return;
       }
 
-      setLoading(false);
-      return;
+      // 🔹 NORMAL CHAT (AI / fallback)
+      const res = await fetch("http://localhost:5000/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text })
+      });
+
+      const data = await res.json();
+
+      setMessages(prev => [
+        ...prev,
+        { from: "bot", text: data.reply || "No response" }
+      ]);
+
+    } catch {
+      setMessages(prev => [
+        ...prev,
+        { from: "bot", text: "⚠️ Error fetching data." }
+      ]);
     }
 
-    // 🔹 NORMAL CHAT (AI / fallback)
-    const res = await fetch("http://localhost:5000/api/chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ message: text })
-    });
-
-    const data = await res.json();
-
-    setMessages(prev => [
-      ...prev,
-      { from: "bot", text: data.reply || "No response" }
-    ]);
-
-  } catch {
-    setMessages(prev => [
-      ...prev,
-      { from: "bot", text: "⚠️ Error fetching data." }
-    ]);
-  }
-
-  setLoading(false);
-};
+    setLoading(false);
+  };
 
   return (
     <>
