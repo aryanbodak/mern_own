@@ -760,3 +760,78 @@ body {
   border-radius: 100px;
   transition: width 0.5s ease;
 }
+
+.player-nav-btns {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 36px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border, #e5e7eb);
+}
+
+.player-nav-btn {
+  padding: 10px 22px;
+  border-radius: 8px;
+  border: 1px solid var(--border, #d1d5db);
+  background: var(--card-bg, #fff);
+  color: var(--text, #111827);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.player-nav-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.player-nav-btn:not(:disabled):hover {
+  background: var(--hover-bg, #f3f4f6);
+}
+
+.player-nav-btn-primary {
+  background: #6366f1;
+  color: #fff;
+  border-color: #6366f1;
+}
+
+.player-nav-btn-primary:not(:disabled):hover {
+  background: #4f46e5;
+}
+
+.player-nav-counter {
+  flex: 1;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text-muted, #6b7280);
+}
+
+/* Progress badge in the player header */
+.player-progress-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.player-progress-bar-track {
+  width: 120px;
+  height: 6px;
+  border-radius: 99px;
+  background: var(--border, #e5e7eb);
+  overflow: hidden;
+}
+
+.player-progress-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.4s ease;
+}
+
+.player-progress-pct {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text, #111827);
+  min-width: 32px;
+}

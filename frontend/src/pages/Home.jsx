@@ -42,6 +42,14 @@ function Home() {
   const enrolledCourseIds = new Set(enrolledCourses.map(c => c._id));
   const filteredExplore   = activeTab === "All" ? allCourses : allCourses.filter(c => c.tag === activeTab);
 
+  // ✅ Helper: compute progress % for any course object
+  const getProgress = (course) => {
+    let totalSubs = 0;
+    course.topics?.forEach(t => { totalSubs += t.subTopics?.length || 0; });
+    const done = userProgress[course._id]?.length || 0;
+    return totalSubs === 0 ? 0 : Math.min(Math.floor((done / totalSubs) * 100), 100);
+  };
+
   return (
     <div className="home-root">
       {/* NAV */}
@@ -90,21 +98,42 @@ function Home() {
             {loading ? <p className="loading-text">Loading...</p> : (
               <div className="course-grid">
                 {filteredExplore.length === 0 ? <p className="empty-text">No courses in this category.</p> : (
-                  filteredExplore.map(course => (
-                    <div className="course-card" key={course._id} style={{ "--accent": course.color || "#6366f1" }}>
-                      <div className="card-tag">{course.tag}</div>
-                      <h3 className="card-title">{course.title}</h3>
-                      <div className="card-meta">
-                        <div className="card-meta-item">📚 {course.lessons} lessons</div>
-                        <div className="card-meta-item">⏱ {course.duration || "N/A"}</div>
+                  filteredExplore.map(course => {
+                    const isEnrolled = enrolledCourseIds.has(course._id);
+                    const prog = isEnrolled ? getProgress(course) : null;
+                    return (
+                      <div className="course-card" key={course._id} style={{ "--accent": course.color || "#6366f1" }}>
+                        <div className="card-tag">{course.tag}</div>
+                        <h3 className="card-title">{course.title}</h3>
+                        <div className="card-meta">
+                          <div className="card-meta-item">📚 {course.lessons} lessons</div>
+                          <div className="card-meta-item">⏱ {course.duration || "N/A"}</div>
+                        </div>
+
+                        {/* ✅ Show progress bar on explore cards too, if enrolled */}
+                        {isEnrolled && (
+                          <div className="progress-wrap">
+                            <div className="progress-info">
+                              <span>Progress</span>
+                              <span className="progress-pct">{prog}%</span>
+                            </div>
+                            <div className="progress-bar-track">
+                              <div
+                                className="progress-bar-fill-dynamic"
+                                style={{ width: `${prog}%`, background: course.color || "#6366f1" }}
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="card-footer">
+                          {isEnrolled
+                            ? <span className="card-enroll card-enroll-active" onClick={() => navigate(`/course/${course._id}`)}>Continue Learning →</span>
+                            : <span className="card-enroll" onClick={() => navigate(`/course/${course._id}`)}>View Details →</span>}
+                        </div>
                       </div>
-                      <div className="card-footer">
-                        {enrolledCourseIds.has(course._id)
-                          ? <span className="card-enroll card-enroll-active" onClick={() => navigate(`/course/${course._id}`)}>Continue Learning →</span>
-                          : <span className="card-enroll" onClick={() => navigate(`/course/${course._id}`)}>View Details →</span>}
-                      </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             )}
@@ -129,10 +158,7 @@ function Home() {
               ) : (
                 <div className="course-grid">
                   {enrolledCourses.map(course => {
-                    let totalSubs = 0;
-                    course.topics?.forEach(t => { totalSubs += t.subTopics?.length || 0; });
-                    const done = userProgress[course._id]?.length || 0;
-                    const prog = totalSubs === 0 ? 0 : Math.min(Math.floor((done / totalSubs) * 100), 100);
+                    const prog = getProgress(course);
                     return (
                       <div className="course-card" key={course._id} style={{ "--accent": course.color || "#6366f1" }}>
                         <div className="card-tag">{course.tag}</div>
