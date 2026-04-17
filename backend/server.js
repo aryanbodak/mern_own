@@ -248,59 +248,24 @@ app.post("/api/chat", async (req, res) => {
     }
 
     const msg = message.toLowerCase();
-
     const courses = await Course.find();
-
     const courseList = courses.map(c => `• ${c.title}`).join("\n");
 
-    // 🔹 TRY OPENAI FIRST
-    try {
-      const completion = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
-        messages: [
-          {
-            role: "system",
-            content: `You are CourseDB assistant. Help users with courses.\nCourses:\n${courseList}`
-          },
-          {
-            role: "user",
-            content: message
-          }
-        ],
-        max_tokens: 150,
-      });
-
+    if (msg.includes("course")) {
       return res.json({
-        reply: completion.choices[0].message.content
-      });
-
-    } catch (aiError) {
-      console.log("AI FAILED → fallback mode");
-
-      // 🔹 FALLBACK BOT (SMART RULES)
-      if (msg.includes("course")) {
-        return res.json({
-          reply: `Available courses:\n\n${courseList}`
-        });
-      }
-
-      if (msg.includes("recommend")) {
-        const random = courses[Math.floor(Math.random() * courses.length)];
-        return res.json({
-          reply: `Try this: ${random.title}`
-        });
-      }
-
-      if (msg.includes("enroll")) {
-        return res.json({
-          reply: "Go to Explore → select course → click Enroll"
-        });
-      }
-
-      return res.json({
-        reply: "AI is unavailable right now. Try asking about courses or enrollment."
+        reply: `Available courses:\n\n${courseList}`
       });
     }
+
+    if (msg.includes("enroll")) {
+      return res.json({
+        reply: "Go to Explore → select course → click Enroll"
+      });
+    }
+
+    return res.json({
+      reply: "Try asking about available courses or how to enroll!"
+    });
 
   } catch (err) {
     console.error(err);
@@ -312,5 +277,5 @@ app.post("/api/chat", async (req, res) => {
    SERVER START
 ────────────────────────────────────────────────────────── */
 app.listen(5000, () =>
-  console.log("Server running on http://localhost:5000")
+  console.log("Server running  http://localhost:5000")
 );
