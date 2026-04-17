@@ -58,11 +58,14 @@ export default function CoursePlayer() {
   const currentTopic = course?.topics?.[activeTopic];
   const currentSub   = currentTopic?.subTopics?.[activeSub];
 
-  // ✅ FIX: Only mark complete when the user explicitly navigated (not on refresh/initial load)
+  // Track the previous subtopic so we can mark it complete when navigating away
+  const prevSubRef = useRef(null);
+
   useEffect(() => {
-    if (isEnrolled && currentSub?._id && didNavigate.current) {
-      markComplete(currentSub._id);
+    if (isEnrolled && didNavigate.current && prevSubRef.current) {
+      markComplete(prevSubRef.current);
     }
+    prevSubRef.current = currentSub?._id || null;
   }, [isEnrolled, activeTopic, activeSub]);
 
   const markComplete = async (subid) => {
@@ -106,8 +109,12 @@ export default function CoursePlayer() {
     goToSub(tIdx, sIdx);
   };
 
-  const goNext = () => {
-    if (!hasNext) return;
+  const goNext = async () => {
+    if (!hasNext) {
+      if (currentSub?._id) await markComplete(currentSub._id);
+      navigate("/home");
+      return;
+    }
     const { tIdx, sIdx } = allSubs[currentFlatIdx + 1];
     goToSub(tIdx, sIdx);
   };
@@ -218,7 +225,6 @@ export default function CoursePlayer() {
                   <button
                     className="player-nav-btn player-nav-btn-primary"
                     onClick={goNext}
-                    disabled={!hasNext}
                   >
                     {currentFlatIdx === allSubs.length - 1 ? "Finished 🎉" : "Next →"}
                   </button>
