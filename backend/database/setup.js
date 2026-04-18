@@ -4,7 +4,7 @@
  * Use this once to initialise the database from scratch.
  * Run with:  node database/setup.js
  *
- * ⚠️  This DROPS existing collections and re-creates everything.
+ *  This DROPS existing collections and re-creates everything.
  *     For incremental seeding use seed.js instead.
  */
 

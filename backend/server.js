@@ -10,15 +10,15 @@ const userRoutes     = require("./routes/userRoutes");
 const adminRoutes    = require("./routes/adminRoutes");
 const chatRoutes     = require("./routes/chatRoutes");
 
-/* ── DB ─────────────────────────────────────────────────── */
+// DB
 connectDB();
 
-/* ── APP ────────────────────────────────────────────────── */
+// APP  
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-/* ── ROUTES ─────────────────────────────────────────────── */
+// ROUTES
 app.use("/api",         authRoutes);    // POST /api/signup, /api/login
 app.use("/api",         enrollRoutes);  // POST /api/enroll
 app.use("/api/courses", courseRoutes);  // GET  /api/courses, /api/courses/:id
@@ -26,7 +26,6 @@ app.use("/api/user",    userRoutes);    // GET|PUT /api/user/:username, POST /ap
 app.use("/api/admin",   adminRoutes);   // /api/admin/*
 app.use("/api/chat",    chatRoutes);    // POST /api/chat
 
-/* ── START ──────────────────────────────────────────────── */
 app.listen(5000, () =>
   console.log("Server running  http://localhost:5000")
 );
